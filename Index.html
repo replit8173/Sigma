@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Skibidi API Monitor</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#0f1720;color:#e6eef8;margin:0;padding:20px}
+    .wrap{max-width:1000px;margin:0 auto}
+    h1{color:#00ffd1;margin:0 0 12px}
+    .card{background:#0b1320;padding:16px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.6)}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:left;font-size:14px}
+    th{opacity:0.8;font-weight:600}
+    .no-data{opacity:0.7}
+    .small{font-size:12px;color:#98a3b3}
+    #refresh{margin-left:8px;padding:6px 10px;border-radius:6px;border:none;background:#133244;color:#fff;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Skibidi API Monitor</h1>
+    <div class="card">
+      <div>
+        <button id="refresh">Làm mới</button>
+        <span class="small">API: <span id="apiUrl"></span></span>
+      </div>
+      <div id="status" class="small" style="margin-top:8px"></div>
+      <table id="tbl" aria-label="Server data">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Players</th>
+            <th>PlaceId</th>
+            <th>JobId</th>
+            <th>Pets</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="nodata" class="no-data" style="margin-top:10px;display:none">Chưa có dữ liệu (chờ script Roblox gửi)</div>
+    </div>
+  </div>
+
+  <script>
+    const API = "/api"; // giữ như này nếu bạn deploy trên same Vercel project
+    document.getElementById("apiUrl").innerText = location.origin + API;
+
+    async function load() {
+      const statusEl = document.getElementById("status");
+      const tbody = document.querySelector("#tbl tbody");
+      const nodata = document.getElementById("nodata");
+      statusEl.textContent = "Đang tải...";
+      try {
+        const res = await fetch(API);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        // Nếu API trả object {message:...} thì coi là chưa có data
+        if (!Array.isArray(data)) {
+          tbody.innerHTML = "";
+          nodata.style.display = "block";
+          statusEl.textContent = JSON.stringify(data);
+          return;
+        }
+
+        nodata.style.display = data.length === 0 ? "block" : "none";
+        tbody.innerHTML = "";
+        data.slice().forEach((d, i) => {
+          const pets = Array.isArray(d.pets) ? d.pets.map(p => p.name || p).join(", ") : (d.pets || "");
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${i+1}</td>
+            <td>${d.targetPlayer || "—"}</td>
+            <td>${d.playerCount || "—"}/${d.maxPlayers || "—"}</td>
+            <td>${d.placeId || "—"}</td>
+            <td>${d.jobId || "—"}</td>
+            <td>${pets}</td>
+            <td>${d.timestamp || d.receivedAt || "—"}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+        statusEl.textContent = "OK — Lấy " + data.length + " mục";
+      } catch (err) {
+        statusEl.textContent = "Lỗi: " + err.message;
+      }
+    }
+
+    document.getElementById("refresh").addEventListener("click", load);
+    load();
+    setInterval(load, 10000);
+  </script>
+</body>
+</html>
