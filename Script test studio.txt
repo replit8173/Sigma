@@ -12,13 +12,22 @@ local Stats = game:GetService('Stats')
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild('PlayerGui')
-
+ 
+local function getGuiParent()
+    if gethui then
+        return gethui()
+    elseif game.CoreGui then
+        return game.CoreGui
+    else
+        return LocalPlayer:WaitForChild("PlayerGui")
+    end
+end
 -- 🖥️ TẠO SCREEN GUI SỚM
 local screenGui = Instance.new('ScreenGui')
 screenGui.Name = 'PetFinderMini_V2'
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
-screenGui.Parent = playerGui
+screenGui.Parent = getGuiParent()  
 -- 📱 Responsive GUI (tự co lại cho mobile)
 local viewportSize = Workspace.CurrentCamera and Workspace.CurrentCamera.ViewportSize or Vector2.new(1280, 720)
 local IS_SMALL_SCREEN = viewportSize.X <= 900      -- ~ mobile / tablet đứng
@@ -1607,7 +1616,7 @@ end
 -- ⏰ ESP TIMER SYSTEM (ISOLATED SCOPE)
 ---------------------------------------------------------
 do
-    local CoreGui = game:GetService("CoreGui")
+    local CoreGui = getGuiParent()
     local RunService = game:GetService("RunService")
     local Workspace = game:GetService("Workspace")
     
